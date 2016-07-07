@@ -11,13 +11,13 @@ function handleRequest(request, response) {
   filename = url.replace('localhost', '');
 
   if(filename === '/') {
-    filename = '/public/index.html';
+    filename = 'index.html';
   }
 
-  fs.exists('.' + filename, function(exists) {
+  fs.exists('./public/' + filename, function(exists) {
     if(exists) {
       console.log("file path: " + filename);
-      fs.readFile('.' + filename, function (err, messageBody) {
+      fs.readFile('./public/' + filename, function (err, messageBody) {
         if(err) throw err;
         console.log(response.statusCode);
         response.writeHead(200);
