@@ -61,7 +61,52 @@ function handleRequest(request, response) {
   }
 
   else if(request.method == 'PUT') {
+    request.on('data', function(chunk) {
+      postData = chunk.toString();
+      var parsed = querystring.parse(postData);
+      console.log("Keys: " + Object.getOwnPropertyNames(parsed));
 
+      var newElementName = parsed.elementName;
+      var newElementSymbol = parsed.elementSymbol;
+      var newElementAtomicNumber = parsed.elementAtomicNumber;
+      var newElementDescription = parsed.elementDescription;
+
+      var newElementHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The Elements - ${newElementName}</title>
+  <link rel="stylesheet" href="css/styles.css" type="text/css">
+</head>
+<body>
+  <h1>${newElementName}</h1>
+  <h2>${newElementSymbol}</h2>
+  <h3>Atomic number ${newElementAtomicNumber}</h3>
+  <p>${newElementDescription}</p>
+  <p><a href="/">back</a></p>
+</body>
+</html>`;
+
+      fs.access('./public/' + newElementName.toLowerCase() + '.html', function (err) {
+        if(err) {
+          console.log("Cannot call PUT on a file that doesn't exist.");
+          response.writeHead(404);
+          response.end();
+        }
+        else {
+          fs.writeFile("./public/" + newElementName.toLowerCase() + ".html", newElementHTML, function (err) {
+            if (err) throw err;
+            console.log("Element file: " + newElementName.toLowerCase() + ".html edited.");
+            response.writeHead(200);
+            response.end();
+          });
+        }
+      });
+    });
+
+    request.on('error', function (e) {
+      throw new Error(e);
+    });
   }
   function createNewPage(postData) {
     var elementName;
