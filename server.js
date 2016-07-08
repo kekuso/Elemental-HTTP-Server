@@ -112,7 +112,7 @@ function handleRequest(request, response) {
 
   else if(request.method == 'DELETE') {
     var fileToDelete = request.url;
-
+    elementName = fileToDelete.replace('.html', '');
     fs.access('./public' + fileToDelete, function (err) {
       if(err) {
         console.log("Unable to find file to delete.");
@@ -122,6 +122,9 @@ function handleRequest(request, response) {
       else {
         fs.unlink('./public' + fileToDelete);
         console.log("Removed " + fileToDelete);
+        elements.splice(elements.indexOf(fileToDelete), 1);
+        appendToIndex();
+        numNewElements--;
         response.writeHead(200);
         response.end();
       }
@@ -180,7 +183,7 @@ function handleRequest(request, response) {
           if (err) throw err;
           console.log("New element file: " + elementName.toLowerCase() + ".html created.");
           numNewElements++;
-          appendToIndex(elementName);
+          appendToIndex();
           response.writeHead(200);
           response.end();
         });
@@ -189,7 +192,7 @@ function handleRequest(request, response) {
 
   }
 
-  function appendToIndex(elementName) {
+  function appendToIndex() {
     var elementsHTML = "";
     console.log("elements.length: " + elements.length);
     for (var j = 0; j < elements.length; j++) {
