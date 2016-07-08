@@ -4,8 +4,9 @@ var querystring = require('querystring');
 var port = 8080;
 var filename;
 var url;
-
+var numNewElements = 0;
 var server = http.createServer(handleRequest);
+var elements = [];
 
 function handleRequest(request, response) {
   var postData;
@@ -66,15 +67,20 @@ function handleRequest(request, response) {
     var elementDescription;
     var pairs = [];
     var queryArray = postData.split('&');
+
+    console.log("num Elements: " + numNewElements);
     for(var i = 0; i < queryArray.length; i++) {
       pairs[i] = queryArray[i].split('=');
     }
-
     elementName = pairs[0][1];
     elementSymbol = pairs[1][1];
     elementAtomicNumber = pairs[2][1];
     elementDescription = pairs[3][1];
     editedDescription = elementDescription.replace(/\+/g, " ");
+
+    elements[numNewElements] = '<li>\n' +
+                            '<a href="' + elementName.toLowerCase() + '.html' +  '">' + elementName + '</a>\n' +
+                          '</li>\n';
 
     var newHTMLPage =  '<!DOCTYPE html>\n' +
                        '<html lang="en">\n' +
@@ -92,10 +98,54 @@ function handleRequest(request, response) {
                        '</body>\n' +
                        '</html>';
 
-    fs.writeFile("./public/" + elementName.toLowerCase() + ".html", newHTMLPage, function (err) {
-      if (err) throw err;
-      console.log("New file created.");
+    fs.exists('./public/' + elementName.toLowerCase() + '.html', function (exists) {
+      if(exists) {
+        throw new Error("element already exists.");
+      }
+      fs.writeFile("./public/" + elementName.toLowerCase() + ".html", newHTMLPage, function (err) {
+        if (err) throw err;
+        console.log("New element file: " + elementName.toLowerCase() + ".html created.");
+        numNewElements++;
+      });
     });
+    appendToIndex(elementName);
+  }
+
+  function appendToIndex(elementName) {
+    var elementsHTML = "";
+    console.log("elements.length: " + elements.length);
+    for (var j = 0; j < elements.length; j++) {
+      elementsHTML += elements[j];
+    }
+
+    var indexData = '<!DOCTYPE html>\n' +
+                       '<html lang="en">\n' +
+                       '<head>\n' +
+                         '<meta charset="UTF-8">\n' +
+                         '<title>The Elements</title>\n' +
+                         '<link rel="stylesheet" href="/css/styles.css">\n' +
+                       '</head>\n' +
+                       '<body>\n' +
+                         '<h1>The Elements</h1>\n' +
+                         '<h2>These are all the known elements</h2>\n' +
+                         '<h3>These are ' + (elements.length + 2) + '</h3>\n' +
+                         '<ol>\n' +
+                          '<li>\n' +
+                            '<a href="hydrogen.html">Hydrogen</a>\n' +
+                          '</li>\n' +
+                          '<li>\n' +
+                            '<a href="helium.html">Helium</a>\n' +
+                          '</li>\n' +
+                          elementsHTML +
+                        '</ol>\n' +
+                       '</body>\n' +
+                       '</html>';
+
+      fs.writeFile('./public/index.html', indexData, function (err) {
+        if (err) throw err;
+        console.log("Added new link to index.html.");
+      });
+      elementsHTML = "";
   }
 
   request.on('end', function () {
