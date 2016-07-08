@@ -64,7 +64,6 @@ function handleRequest(request, response) {
     request.on('data', function(chunk) {
       postData = chunk.toString();
       var parsed = querystring.parse(postData);
-      console.log("Keys: " + Object.getOwnPropertyNames(parsed));
 
       var newElementName = parsed.elementName;
       var newElementSymbol = parsed.elementSymbol;
@@ -90,14 +89,16 @@ function handleRequest(request, response) {
       fs.access('./public/' + newElementName.toLowerCase() + '.html', function (err) {
         if(err) {
           console.log("Cannot call PUT on a file that doesn't exist.");
-          response.writeHead(404);
+          response.writeHead(404, {'Content-Type' : 'application/json'});
+          response.write('{ "error" : "resource /' + newElementName.toLowerCase() + '.html does not exist" }');
           response.end();
         }
         else {
           fs.writeFile("./public/" + newElementName.toLowerCase() + ".html", newElementHTML, function (err) {
             if (err) throw err;
             console.log("Element file: " + newElementName.toLowerCase() + ".html edited.");
-            response.writeHead(200);
+            response.writeHead(200, {'Content-Type' : 'application/json'});
+            response.write('{"success" : true}');
             response.end();
           });
         }
@@ -106,6 +107,28 @@ function handleRequest(request, response) {
 
     request.on('error', function (e) {
       throw new Error(e);
+    });
+  }
+
+  else if(request.method == 'DELETE') {
+    var fileToDelete = request.url;
+
+    fs.access('./public' + fileToDelete, function (err) {
+      if(err) {
+        console.log("Unable to find file to delete.");
+        response.writeHead(404);
+        response.end();
+      }
+      else {
+        fs.unlink('./public' + fileToDelete);
+        console.log("Removed " + fileToDelete);
+        response.writeHead(200);
+        response.end();
+      }
+    });
+
+    response.on('error', function (err) {
+      throw new Error(err);
     });
   }
   function createNewPage(postData) {
