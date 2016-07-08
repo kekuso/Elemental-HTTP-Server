@@ -43,7 +43,7 @@ function handleRequest(request, response) {
   }
 
   // POST method
-  if(request.method == 'POST') {
+  else if(request.method == 'POST') {
     request.on('error', function (e) {
       throw new Error(e);
     });
@@ -60,6 +60,9 @@ function handleRequest(request, response) {
     });
   }
 
+  else if(request.method == 'PUT') {
+
+  }
   function createNewPage(postData) {
     var elementName;
     var elementSymbol;
@@ -98,17 +101,24 @@ function handleRequest(request, response) {
                        '</body>\n' +
                        '</html>';
 
-    fs.exists('./public/' + elementName.toLowerCase() + '.html', function (exists) {
-      if(exists) {
-        throw new Error("element already exists.");
+    fs.access('./public/' + elementName.toLowerCase() + '.html', function (err) {
+      if(!err) {
+        console.log("File already exists.");
+        response.writeHead(400);
+        response.end();
       }
-      fs.writeFile("./public/" + elementName.toLowerCase() + ".html", newHTMLPage, function (err) {
-        if (err) throw err;
-        console.log("New element file: " + elementName.toLowerCase() + ".html created.");
-        numNewElements++;
-      });
+      else {
+        fs.writeFile("./public/" + elementName.toLowerCase() + ".html", newHTMLPage, function (err) {
+          if (err) throw err;
+          console.log("New element file: " + elementName.toLowerCase() + ".html created.");
+          numNewElements++;
+          appendToIndex(elementName);
+          response.writeHead(200);
+          response.end();
+        });
+      }
     });
-    appendToIndex(elementName);
+
   }
 
   function appendToIndex(elementName) {
